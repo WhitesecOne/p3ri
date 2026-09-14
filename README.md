@@ -1,67 +1,110 @@
-# Payload Blank Template
+# P3RI Website Rebuild
 
-This template comes configured with the bare minimum to get started on anything you need.
+Situs resmi **P3RI — Perkumpulan Profesi Pengelola Rekod Indonesia** (p3ri.or.id).
+Rebuild dari WordPress ke Next.js + Payload CMS, dengan panel admin supaya pengelola website non-teknis bisa menulis dan mempublikasikan artikel sendiri.
 
-## Quick start
+> Baca `CLAUDE.md` dulu sebelum mulai kerja di repo ini — itu adalah instruksi kerja untuk Claude Code.
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+## Tech stack
 
-## Quick Start - local setup
+| Layer | Pilihan |
+|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| CMS / Backend | Payload CMS 3.88 (embedded, admin di `/admin`) |
+| Database | PostgreSQL 16 (Homebrew di lokal → Neon di production) |
+| Storage media | Disk lokal `./media` di dev → Vercel Blob di production (aktif otomatis kalau `BLOB_READ_WRITE_TOKEN` diisi) |
+| Styling | Tailwind CSS v4 + shadcn/ui (radix, preset nova) |
+| Animasi | Motion (`motion/react`) — scroll reveal & stagger, hormat `prefers-reduced-motion` |
+| Email | Resend (`RESEND_API_KEY`); tanpa key, email hanya dicetak ke console |
+| Package manager | pnpm 11 |
 
-To spin up this template locally, follow these steps:
+Detail lengkap ada di folder `docs/`:
 
-### Clone
+- [`docs/PRD.md`](docs/PRD.md) — requirement produk & scope
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — arsitektur, deployment, redirect URL lama
+- [`docs/DATABASE.md`](docs/DATABASE.md) — skema koleksi/data
+- [`docs/API.md`](docs/API.md) — endpoint & kontrak API
+- [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md) — UI/UX guideline
+- [`docs/SECURITY.md`](docs/SECURITY.md) — requirement keamanan (wajib dipatuhi)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — fase pengerjaan
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## Prasyarat
 
-### Development
+- Node.js ≥ 20 (dites di 24)
+- pnpm ≥ 9
+- PostgreSQL 16 lokal via Homebrew (`brew install postgresql@16`) — atau connection string Neon
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+## Menjalankan lokal
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+```bash
+pnpm install
+cp .env.example .env          # isi PAYLOAD_SECRET (openssl rand -hex 32); DATABASE_URI default sudah cocok dengan PostgreSQL lokal (user/pass/db: p3ri)
+pnpm db:up                    # brew services start postgresql@16 (localhost:5432, user/pass/db: p3ri)
+# sekali saja setelah instal: createuser -P p3ri (password: p3ri) && createdb -O p3ri p3ri
+pnpm seed                     # admin awal, pengaturan situs + medsos + logo, kategori, halaman Tentang & Keanggotaan (tanpa artikel)
+pnpm dev
+```
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+- Frontend: http://localhost:3000
+- Admin: http://localhost:3000/admin — login awal `admin@p3ri.or.id` / `AdminP3RI-2026!` (atau `SEED_ADMIN_PASSWORD`). **Ganti password setelah login pertama.**
 
-#### Docker (Optional)
+Kalau tidak menjalankan seed, buka `/admin` dan buat user admin pertama dari form yang muncul.
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+## Scripts
 
-To do so, follow these steps:
+| Command | Fungsi |
+|---|---|
+| `pnpm dev` | Dev server (schema DB disinkronkan otomatis) |
+| `pnpm build` / `pnpm start` | Build & jalankan production |
+| `pnpm ci` | `payload migrate` lalu build — dipakai sebagai Build Command di Vercel |
+| `pnpm lint` | ESLint |
+| `pnpm generate:types` | Regenerasi `src/payload-types.ts` setelah ubah collection |
+| `pnpm payload migrate:create` | Buat file migration setelah ubah schema (wajib sebelum deploy) |
+| `pnpm seed` | Isi konten awal (idempoten) |
+| `pnpm check:rbac` | Uji end-to-end matrix RBAC lewat REST (dev server harus jalan) |
+| `pnpm db:up` / `pnpm db:down` | Nyalakan / matikan PostgreSQL lokal (Homebrew service) |
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+## Environment variables
 
-## How it works
+Lihat `.env.example`. Minimal di production:
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+```
+DATABASE_URI=postgresql://...          # Neon
+PAYLOAD_SECRET=<random ≥32 karakter>
+NEXT_PUBLIC_SITE_URL=https://www.p3ri.or.id
+BLOB_READ_WRITE_TOKEN=<Vercel Blob>
+RESEND_API_KEY=<Resend>
+EMAIL_FROM=noreply@p3ri.or.id           # domain harus diverifikasi di Resend
+NOTIFY_EMAIL=p3ri.indonesia@gmail.com   # penerima notifikasi form
+```
 
-### Collections
+Jangan commit file `.env` — lihat `docs/SECURITY.md`.
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Struktur singkat
 
-- #### Users (Authentication)
+```
+src/
+├── app/(frontend)/     # halaman publik: /, /about, /program, /membership, /blog, /blog/[slug], /sumber-daya, /contact, /preview, /[slug] (redirect URL lama)
+├── app/(payload)/      # admin panel & REST API Payload
+├── collections/        # Posts, Events, Categories, Media, Pages, BoardMembers, ContactSubmissions, MembershipInquiries, Users
+├── globals/Settings.ts # nama situs, kontak, medsos, footer
+├── access/             # fungsi RBAC (docs/SECURITY.md §1)
+├── hooks/              # revalidate ISR, anti-spam, notifikasi email
+├── components/         # ui/ (shadcn), blocks/, layout/, forms/, motion/
+├── lib/                # queries (Local API), content statis (copy, FAQ, regulasi, glosarium), helper
+├── migrations/         # migration Drizzle
+├── seed.ts             # konten awal
+└── rbac-check.ts       # uji RBAC
+```
 
-  Users are auth-enabled collections that have access to the admin panel.
+## SEO, AEO/GEO, dan berkas standar
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+- Metadata kanonik + Open Graph + Twitter per halaman (`src/lib/seo.ts`), OG image ber-desain per rute (`opengraph-image.tsx`, renderer di `src/lib/og.tsx`, font di `src/assets/fonts/`).
+- JSON-LD schema.org: `Organization`, `WebSite` (layout), `BreadcrumbList`, `WebPage`/`AboutPage`/`ContactPage`/`CollectionPage`, `FAQPage` (beranda, keanggotaan), `Event` (agenda), `BlogPosting` (artikel), `DefinedTermSet` (glosarium).
+- `/robots.txt` (crawler AI diizinkan eksplisit), `/sitemap.xml`, `/manifest.webmanifest`, `/llms.txt`, `/llms-full.txt` (konten situs dalam Markdown untuk LLM, ikut memuat artikel & agenda terbit), `/.well-known/security.txt` (RFC 9116; `/security.txt` dialihkan).
+- Halaman `/privasi` (UU PDP), tombol bagikan, waktu baca, dan artikel terkait di detail artikel.
 
-- #### Media
+## Kontak
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+Pertanyaan konten & requirement bisnis: kepala divisi / pengurus P3RI.
+Pertanyaan teknis repo: lihat `CLAUDE.md`.
