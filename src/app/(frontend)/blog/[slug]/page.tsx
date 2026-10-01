@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { asMedia, mediaUrl } from '@/lib/media'
 import { getPayloadClient } from '@/lib/payload'
+import { isCmsEnabled } from '@/lib/cms'
 import { getPostBySlug, getRelatedPosts } from '@/lib/queries'
 import { articleLd, breadcrumbLd, graph } from '@/lib/seo'
 import { formatDate, readingTime, SITE_URL } from '@/lib/utils'
@@ -22,6 +23,7 @@ export const revalidate = 3600
 type Params = { params: Promise<{ slug: string }> }
 
 export async function generateStaticParams() {
+  if (!isCmsEnabled()) return []
   const payload = await getPayloadClient()
   const { docs } = await payload.find({ collection: 'posts', limit: 200, pagination: false, select: { slug: true }, where: { _status: { equals: 'published' } } })
   return docs.map((d) => ({ slug: d.slug }))

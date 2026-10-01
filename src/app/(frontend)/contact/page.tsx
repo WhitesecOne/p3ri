@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { ADDRESS, COLLAB_TYPES } from '@/lib/content'
 import { JsonLd } from '@/components/json-ld'
 import { getSettings } from '@/lib/queries'
+import { isCmsEnabled } from '@/lib/cms'
 import { breadcrumbLd, graph, pageMetadata, webPageLd } from '@/lib/seo'
 
 const DESC = 'Hubungi sekretariat P3RI — alamat, email, telepon, formulir pesan, dan bentuk kerja sama: narasumber, workshop in-house, klinik, kolaborasi akademik.'
@@ -21,6 +22,7 @@ const dots = ['bg-brand-red', 'bg-brand-green', 'bg-brand-silver', 'bg-brand-amb
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ subjek?: string }> }) {
   const [settings, { subjek }] = await Promise.all([getSettings(), searchParams])
   const c = settings.contactInfo
+  const cmsEnabled = isCmsEnabled()
   return (
     <>
       <JsonLd data={graph(webPageLd({ path: '/contact', name: 'Kontak P3RI', description: DESC, type: 'ContactPage' }), breadcrumbLd([{ name: 'Kontak', path: '/contact' }]))} />
@@ -35,11 +37,15 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
         <div className="grid gap-12 lg:grid-cols-12">
           <Reveal className="lg:col-span-7">
             <div id="formulir" className="scroll-mt-20 rounded-lg border bg-card p-6 md:p-10">
-              <p className="eyebrow">Formulir</p>
+              <p className="eyebrow">{cmsEnabled ? 'Formulir' : 'Email sekretariat'}</p>
               <h2 className="mt-3 font-heading text-3xl font-semibold">Kirim pesan</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Kolom bertanda * wajib diisi. Balasan dikirim ke alamat email yang Anda cantumkan.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{cmsEnabled ? 'Kolom bertanda * wajib diisi. Balasan dikirim ke alamat email yang Anda cantumkan.' : 'Untuk pertanyaan atau kerja sama, kirimkan pesan langsung ke email sekretariat P3RI.'}</p>
               <div className="mt-8">
-                <ContactForm defaultSubject={subjek?.slice(0, 200)} />
+                {cmsEnabled ? <ContactForm defaultSubject={subjek?.slice(0, 200)} /> : (
+                  <Button asChild>
+                    <a href={`mailto:${c?.email}?subject=${encodeURIComponent(subjek?.slice(0, 200) || 'Pertanyaan untuk P3RI')}`}>Hubungi lewat email</a>
+                  </Button>
+                )}
               </div>
             </div>
           </Reveal>

@@ -7,7 +7,9 @@ import { Reveal, Stagger, StaggerItem } from '@/components/motion/reveal'
 import { RichText } from '@/components/rich-text'
 import { COLOR_CLASS, FAQ_MEMBERSHIP, JOIN_STEPS, MEMBER_BENEFITS, MEMBER_DUTIES, MEMBER_RIGHTS, MEMBER_TYPES } from '@/lib/content'
 import { JsonLd } from '@/components/json-ld'
-import { getPage } from '@/lib/queries'
+import { getPage, getSettings } from '@/lib/queries'
+import { isCmsEnabled } from '@/lib/cms'
+import { Button } from '@/components/ui/button'
 import { breadcrumbLd, faqLd, graph, pageMetadata, webPageLd } from '@/lib/seo'
 
 export const revalidate = 3600
@@ -22,7 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MembershipPage() {
-  const page = await getPage('membership')
+  const [page, settings] = await Promise.all([getPage('membership'), getSettings()])
+  const cmsEnabled = isCmsEnabled()
   return (
     <>
       <JsonLd data={graph(webPageLd({ path: '/membership', name: 'Keanggotaan P3RI', description: 'Jenis keanggotaan, manfaat, hak dan kewajiban, langkah pendaftaran, dan FAQ.' }), breadcrumbLd([{ name: 'Keanggotaan', path: '/membership' }]), faqLd(FAQ_MEMBERSHIP))} />
@@ -34,7 +37,7 @@ export default async function MembershipPage() {
           <a href="#daftar" className="group flex items-center justify-between rounded-lg bg-primary p-6 text-primary-foreground transition-colors hover:bg-primary-hover">
             <span>
               <span className="block text-xs font-semibold tracking-widest uppercase opacity-80">Langsung</span>
-              <span className="mt-1 block font-heading text-2xl font-semibold">Isi formulir pendaftaran</span>
+              <span className="mt-1 block font-heading text-2xl font-semibold">{cmsEnabled ? 'Isi formulir pendaftaran' : 'Hubungi pengurus untuk bergabung'}</span>
             </span>
             <span className="font-heading text-4xl transition-transform group-hover:translate-x-1" aria-hidden>→</span>
           </a>
@@ -114,11 +117,15 @@ export default async function MembershipPage() {
           </div>
           <Reveal className="lg:col-span-7">
             <div className="rounded-lg border bg-card p-6 md:p-10">
-              <p className="eyebrow">Formulir pendaftaran</p>
+              <p className="eyebrow">{cmsEnabled ? 'Formulir pendaftaran' : 'Informasi pendaftaran'}</p>
               <h2 className="mt-3 font-heading text-3xl font-semibold">Daftar keanggotaan P3RI</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Pengurus akan menghubungi Anda melalui email untuk langkah selanjutnya. Kolom bertanda * wajib diisi.</p>
+              <p className="mt-2 text-sm text-muted-foreground">{cmsEnabled ? 'Pengurus akan menghubungi Anda melalui email untuk langkah selanjutnya. Kolom bertanda * wajib diisi.' : 'Kirimkan nama, instansi, dan jenis keanggotaan yang diminati melalui email. Pengurus akan menjelaskan langkah pendaftaran selanjutnya.'}</p>
               <div className="mt-8">
-                <MembershipForm />
+                {cmsEnabled ? <MembershipForm /> : (
+                  <Button asChild>
+                    <a href={`mailto:${settings.contactInfo?.email}?subject=${encodeURIComponent('Pendaftaran keanggotaan P3RI')}`}>Tanyakan keanggotaan lewat email</a>
+                  </Button>
+                )}
               </div>
             </div>
           </Reveal>
