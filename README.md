@@ -80,6 +80,35 @@ NOTIFY_EMAIL=p3ri.indonesia@gmail.com   # penerima notifikasi form
 
 Jangan commit file `.env` — lihat `docs/SECURITY.md`.
 
+## Deploy dari GitHub ke Vercel
+
+Repository: [WhitesecOne/p3ri](https://github.com/WhitesecOne/p3ri), branch production: `main`.
+
+1. Di Vercel, pilih **Add New → Project**, hubungkan GitHub **WhitesecOne**, lalu import repository **p3ri**. Jika belum muncul, berikan akses aplikasi Vercel ke repository tersebut di GitHub.
+2. Pilih framework **Next.js**, Root Directory **`./`**, dan Node.js **24.x**. Biarkan Output Directory default. Build Command sudah diatur dalam `vercel.json` menjadi `pnpm run ci` (migrasi database, lalu build).
+3. Siapkan **Neon PostgreSQL** dan **Vercel Blob** untuk project ini. Gunakan Blob store **public** sesuai URL gambar yang diizinkan aplikasi. Integrasi Neon mungkin membuat `DATABASE_URL`; aplikasi ini membaca **`DATABASE_URI`**, jadi salin connection string Neon ke nama tersebut (termasuk pengaturan SSL dari Neon).
+4. Isi Environment Variables untuk **Production** sebelum build berhasil:
+
+   | Variable | Nilai |
+   |---|---|
+   | `DATABASE_URI` | Connection string Neon PostgreSQL |
+   | `PAYLOAD_SECRET` | Secret baru dari `openssl rand -hex 32`; simpan tetap untuk deployment berikutnya |
+   | `NEXT_PUBLIC_SITE_URL` | URL situs lengkap, misalnya `https://p3ri.vercel.app` jika URL tersebut diberikan Vercel, atau domain custom yang sudah tersambung |
+   | `BLOB_READ_WRITE_TOKEN` | Token dari Blob store yang dihubungkan ke project |
+   | `RESEND_API_KEY` | API key Resend untuk notifikasi formulir |
+   | `EMAIL_FROM` | Alamat pengirim pada domain yang sudah diverifikasi di Resend |
+   | `NOTIFY_EMAIL` | Email penerima notifikasi formulir |
+
+   Tambahkan juga `ENABLE_EXPERIMENTAL_COREPACK=1` di Vercel agar instalasi mengikuti versi pnpm pada `packageManager`. Jangan salin nilai placeholder dari `.env.example` sebagai credential.
+
+5. Klik **Deploy**, atau **Redeploy** jika deployment awal berjalan sebelum database/environment siap. Pastikan Production Branch adalah **`main`**. Untuk Preview deployments, gunakan database dan secret terpisah karena Build Command juga menjalankan migrasi.
+6. Setelah deploy berhasil, buka **`/admin`** dan segera buat akun admin pertama dengan password sendiri. Isi Settings, kategori, halaman, dan konten melalui CMS. Database dan file upload lokal tidak ikut dikirim lewat GitHub; pemindahan data lokal perlu dilakukan terpisah. `pnpm seed` bukan bagian dari proses deploy otomatis.
+7. Jika memakai domain `p3ri.or.id`, tambahkan di **Settings → Domains**, ikuti petunjuk DNS Vercel, sesuaikan `NEXT_PUBLIC_SITE_URL`, lalu redeploy.
+
+Setelah terhubung, setiap push atau merge ke `main` otomatis memicu deployment production; GitHub Actions tambahan tidak diperlukan. Perubahan artikel melalui CMS disimpan di database.
+
+Rujukan: [integrasi GitHub Vercel](https://vercel.com/docs/git/vercel-for-github), [konfigurasi build](https://vercel.com/docs/builds/configure-a-build), dan [deployment Payload](https://payloadcms.com/docs/production/deployment).
+
 ## Struktur singkat
 
 ```
