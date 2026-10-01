@@ -38,7 +38,7 @@ Detail lengkap ada di folder `docs/`:
 
 ```bash
 pnpm install
-cp .env.example .env          # isi PAYLOAD_SECRET (openssl rand -hex 32); DATABASE_URI default sudah cocok dengan PostgreSQL lokal (user/pass/db: p3ri)
+cp .env.example .env          # untuk CMS lokal: isi PAYLOAD_SECRET (openssl rand -hex 32) dan DATABASE_URI=postgresql://p3ri:p3ri@localhost:5432/p3ri
 pnpm db:up                    # brew services start postgresql@16 (localhost:5432, user/pass/db: p3ri)
 # sekali saja setelah instal: createuser -P p3ri (password: p3ri) && createdb -O p3ri p3ri
 pnpm seed                     # admin awal, pengaturan situs + medsos + logo, kategori, halaman Tentang & Keanggotaan (tanpa artikel)
@@ -56,7 +56,7 @@ Kalau tidak menjalankan seed, buka `/admin` dan buat user admin pertama dari for
 |---|---|
 | `pnpm dev` | Dev server (schema DB disinkronkan otomatis) |
 | `pnpm build` / `pnpm start` | Build & jalankan production |
-| `pnpm ci` | `payload migrate` lalu build — dipakai sebagai Build Command di Vercel |
+| `pnpm ci` | Build Vercel; migrasi hanya dijalankan jika CMS aktif |
 | `pnpm lint` | ESLint |
 | `pnpm generate:types` | Regenerasi `src/payload-types.ts` setelah ubah collection |
 | `pnpm payload migrate:create` | Buat file migration setelah ubah schema (wajib sebelum deploy) |
@@ -84,8 +84,22 @@ Jangan commit file `.env` — lihat `docs/SECURITY.md`.
 
 Repository: [WhitesecOne/p3ri](https://github.com/WhitesecOne/p3ri), branch production: `main`.
 
+### Tahap sekarang: website publik tanpa Neon dan Blob
+
+1. Import `WhitesecOne/p3ri` di Vercel, pilih **Next.js**, root **`./`**, Node.js **24.x**, dan production branch **`main`**.
+2. Isi `ENABLE_EXPERIMENTAL_COREPACK=1` dan `NEXT_PUBLIC_SITE_URL` dengan URL situs yang diberikan Vercel. Tambahkan `CMS_ENABLED=false` untuk memastikan CMS tetap nonaktif.
+3. Biarkan `DATABASE_URI`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`, dan konfigurasi Resend kosong/belum dibuat. Klik **Deploy**; `pnpm run ci` otomatis melewati migrasi database.
+
+Profil, program, keanggotaan, sumber daya, kontak, logo, dan foto bawaan tetap tampil. Kontak dan pendaftaran menggunakan tautan email sekretariat. Artikel/agenda dari CMS, penyimpanan formulir, panel admin, dan upload media baru belum aktif. Tidak ada pesan sukses palsu untuk formulir yang belum tersimpan.
+
+Tanpa `DATABASE_URI`, mode ini aktif otomatis. `CMS_ENABLED=false` juga dapat dipakai untuk mencoba mode ini di lokal tanpa mengubah credential database. Jika CMS aktif tetapi database bermasalah, aplikasi tetap melaporkan error; tidak diam-diam mengganti konten dengan data kosong.
+
+### Tahap berikutnya: aktifkan CMS, database, dan upload
+
+Hapus `CMS_ENABLED=false` (atau ubah menjadi `true`), lengkapi konfigurasi berikut, lalu redeploy.
+
 1. Di Vercel, pilih **Add New → Project**, hubungkan GitHub **WhitesecOne**, lalu import repository **p3ri**. Jika belum muncul, berikan akses aplikasi Vercel ke repository tersebut di GitHub.
-2. Pilih framework **Next.js**, Root Directory **`./`**, dan Node.js **24.x**. Biarkan Output Directory default. Build Command sudah diatur dalam `vercel.json` menjadi `pnpm run ci` (migrasi database, lalu build).
+2. Pilih framework **Next.js**, Root Directory **`./`**, dan Node.js **24.x**. Biarkan Output Directory default. Build Command sudah diatur dalam `vercel.json` menjadi `pnpm run ci` (migrasi database ketika CMS aktif, lalu build).
 3. Siapkan **Neon PostgreSQL** dan **Vercel Blob** untuk project ini. Gunakan Blob store **public** sesuai URL gambar yang diizinkan aplikasi. Integrasi Neon mungkin membuat `DATABASE_URL`; aplikasi ini membaca **`DATABASE_URI`**, jadi salin connection string Neon ke nama tersebut (termasuk pengaturan SSL dari Neon).
 4. Isi Environment Variables untuk **Production** sebelum build berhasil:
 

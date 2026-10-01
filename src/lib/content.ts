@@ -84,7 +84,7 @@ export const MEMBER_BENEFITS = [
 
 export const JOIN_STEPS = [
   { title: 'Pastikan kriteria', description: 'Warga negara Indonesia yang memenuhi salah satu jenis keanggotaan: Praktisi, Akademisi, atau Pemerhati.' },
-  { title: 'Isi formulir', description: 'Lengkapi formulir pendaftaran daring dengan data yang benar dan alamat email aktif.' },
+  { title: 'Ajukan pendaftaran', description: 'Sampaikan data diri dan alamat email aktif melalui kanal pendaftaran di halaman ini.' },
   { title: 'Verifikasi pengurus', description: 'Pengurus meninjau data dan menghubungi Anda melalui email untuk langkah selanjutnya.' },
   { title: 'Resmi menjadi anggota', description: 'Keanggotaan berlaku dua tahun sejak ditetapkan dan dapat diperpanjang.' },
 ] as const
@@ -273,7 +273,7 @@ export const PROGRAM_DETAILS = [
     audience: 'Profesional dan tim pengelola rekod yang menghadapi persoalan konkret di organisasinya.',
     description: 'Sesi bermodel coaching: peserta membawa kasus nyata — penataan arsip inaktif, penyusunan jadwal retensi, migrasi ke sistem elektronik — dan dipandu merumuskan solusi yang sesuai konteksnya.',
     topics: ['Menyusun klasifikasi dan jadwal retensi arsip', 'Penataan arsip inaktif dan pemusnahan', 'Persiapan implementasi e-office / sistem arsip elektronik', 'Kepatuhan rekod terhadap UU PDP'],
-    how: 'Ajukan kebutuhan melalui formulir kontak dengan subjek "Klinik". Pengurus akan menjadwalkan sesi dan menghubungkan dengan pendamping yang sesuai.',
+    how: 'Ajukan kebutuhan melalui halaman kontak dengan subjek "Klinik". Pengurus akan menjadwalkan sesi dan menghubungkan dengan pendamping yang sesuai.',
   },
   {
     slug: 'workshop',
@@ -307,7 +307,7 @@ export const FAQ_HOME = [
 
 export const FAQ_MEMBERSHIP = [
   { q: 'Apa syarat menjadi anggota?', a: 'Warga negara Indonesia yang memenuhi salah satu kriteria: Praktisi (bekerja mengelola rekod/arsip), Akademisi (dosen, peneliti, mahasiswa bidang terkait), atau Pemerhati.' },
-  { q: 'Bagaimana proses setelah mengisi formulir?', a: 'Pengurus memverifikasi data dan menghubungi Anda melalui email. Informasi lanjutan tentang keanggotaan disampaikan pada tahap tersebut.' },
+  { q: 'Bagaimana proses setelah mengajukan pendaftaran?', a: 'Pengurus memverifikasi data dan menghubungi Anda melalui email. Informasi lanjutan tentang keanggotaan disampaikan pada tahap tersebut.' },
   { q: 'Apakah keanggotaan bisa atas nama instansi?', a: 'Keanggotaan bersifat perorangan. Instansi yang ingin bekerja sama — misalnya workshop in-house — dapat menghubungi pengurus melalui halaman Kontak.' },
   { q: 'Bagaimana memperpanjang keanggotaan?', a: 'Menjelang akhir periode dua tahun, pengurus akan menghubungi anggota untuk perpanjangan.' },
   { q: 'Bagaimana jika ingin mengubah atau menghapus data saya?', a: 'Kirimkan permintaan ke email sekretariat. Sesuai UU Pelindungan Data Pribadi, data Anda hanya digunakan untuk keperluan keanggotaan dan tidak dibagikan ke pihak ketiga.' },

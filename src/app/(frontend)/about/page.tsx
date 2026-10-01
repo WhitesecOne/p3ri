@@ -89,7 +89,10 @@ export default async function AboutPage() {
             {page ? (
               <RichText data={page.content} />
             ) : (
-              <p className="rounded-lg border border-dashed bg-card p-8 text-muted-foreground">Narasi sejarah belum diisi. Editor dapat mengisinya di panel admin → Halaman → Tentang.</p>
+              <div className="space-y-5 leading-relaxed text-muted-foreground">
+                <p>Gagasan pembentukan Perkumpulan Profesi Pengelola Rekod Indonesia (P3RI) bermula dari pertemuan sejumlah praktisi dan akademisi bidang pengelolaan rekod pada 19 Juli 2017 di Jakarta. Pertemuan yang difasilitasi oleh Kantor Arsip Universitas Indonesia tersebut menyepakati perlunya sebuah wadah organisasi profesi.</p>
+                <p>Pada {LEGAL.date}, {LEGAL.authority} mengesahkan pendirian badan hukum P3RI dengan Nomor {LEGAL.number}. P3RI menjalankan program pengembangan kompetensi, advokasi, dan jejaring bersama kampus, lembaga, dan komunitas profesi di berbagai daerah.</p>
+              </div>
             )}
           </Reveal>
         </div>
